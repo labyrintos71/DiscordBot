@@ -48,9 +48,9 @@ public class MusicCommand extends ListenerAdapter {
         }
         if (msg.getContentRaw().startsWith("!stop"))
         	audioManager.closeAudioConnection();
-        AudioPlayer player = playerManager.createPlayer();
-        TrackScheduler trackScheduler = new TrackScheduler(player);
-        player.addListener(trackScheduler);
+      //  AudioPlayer player = playerManager.createPlayer();
+        //TrackScheduler trackScheduler = new TrackScheduler(player);
+       // player.addListener(trackScheduler);
         
 	}
 	
