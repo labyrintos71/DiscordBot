@@ -24,60 +24,70 @@ public class SystemCommand extends ListenerAdapter {
         if(msg.getContentRaw().charAt(0) == '!'){
             String[] command = msg.getContentRaw().substring(1).split(" ");
             
+            switch(msg.getContentRaw().substring(1)) {
             
-            if(command[0].equals("퇴근")||command[0].equals("퇴근해")) {
-            	int temp=new Random().nextInt(3);
-            	if(true) {
-	                tc.sendMessage("앗싸 퇴근이당!").queue();
+            	case "들어가":
+            	case "퇴근":
+            	case "퇴근해":
+            		int temp=new Random().nextInt(3);
+                	if(temp==1) {
+    	                tc.sendMessage("앗싸 퇴근이당!").queue();
+    	                botJDA.shutdown();
+    	                botJDA=null;
+                	}else if(temp==2){
+    	                tc.sendMessage("싫어").queue();
+                			
+                	}else {
+    	                tc.sendMessage("퇴 까").queue();
+                	}
+                	break;
+            	case "꺼져":
+            		tc.sendMessage("넹...").queue();
 	                botJDA.shutdown();
 	                botJDA=null;
-            	}else if(temp==2){
-	                tc.sendMessage("싫어").queue();
-            			
-            	}else {
-	                tc.sendMessage("퇴 까").queue();
-            	}
-            }
-            
-            if(command[0].equals("리스너제거")) {
-                tc.sendMessage("제거중,,,").queue();
-            	for(int i=0;i<botJDA.getRegisteredListeners().size();i++) {
-            		if(!botJDA.getRegisteredListeners().get(i).getClass().getSimpleName().equals("SystemCommandListener")) {
-            			botJDA.removeEventListener(botJDA.getRegisteredListeners().get(i));
-            			i=-1;
-            		}
-            	}
-                tc.sendMessage("제거완료!").queue();
-            }
-            
-            if(command[0].equals("리스너목록")) {
-            	for(int i=0;i<botJDA.getRegisteredListeners().size();i++) {
-            		tc.sendMessage(botJDA.getRegisteredListeners().get(i).getClass().getSimpleName()).queue();
-            	}
-            }
-
-            if(command[0].equals("길드목록")) {
-            	for(int i=0;i<botJDA.getGuilds().size();i++)
-            		tc.sendMessage(botJDA.getGuilds().get(i).getName()).queue();
-            }
-            if(command[0].equals("유저목록")) {
-            	for(int i=0;i<botJDA.getUsers().size();i++)
-            		tc.sendMessage(botJDA.getUsers().get(i).getName()).queue();
-            }
-            if(command[0].equals("보이스채널목록")) {
-            	for(int i=0;i<botJDA.getVoiceChannels().size();i++) {
+	                break;
+            	case "리스너 제거":
+            		tc.sendMessage("제거중,,,").queue();
+                	for(int i=0;i<botJDA.getRegisteredListeners().size();i++) {
+                		if(!botJDA.getRegisteredListeners().get(i).getClass().getSimpleName().equals("SystemCommandListener")) {
+                			botJDA.removeEventListener(botJDA.getRegisteredListeners().get(i));
+                			i=-1;
+                		}
+                	}
+            		break;
+            		
+            	case "리스너 목록":
+            		for(int i=0;i<botJDA.getRegisteredListeners().size();i++) 
+            			tc.sendMessage(botJDA.getRegisteredListeners().get(i).getClass().getSimpleName()).queue();
+            		break;
+            		
+            	case "길드목록":
+            		for(int i=0;i<botJDA.getGuilds().size();i++)
+            			tc.sendMessage(botJDA.getGuilds().get(i).getName()).queue();
+            		break;
+            		
+            	case "유저목록":
+            		for(int i=0;i<botJDA.getUsers().size();i++)
+            			tc.sendMessage(botJDA.getUsers().get(i).getName()).queue();
+            		break;
+            		
+            	case "보이스채널목록":
+            		for(int i=0;i<botJDA.getVoiceChannels().size();i++) {
             		tc.sendMessage(botJDA.getVoiceChannels().get(i).getId()+" /// "+botJDA.getVoiceChannels().get(i).getName()).queue();
-            	}
-            }
-            
-            if(command[0].equals("보이스채널유저목록")) {
-            	for(int i=0;i<botJDA.getVoiceChannels().size();i++) {
-            		if(botJDA.getVoiceChannels().get(i).getId().equals(command[1])){
-            			for(int j=0;j<botJDA.getVoiceChannels().get(i).getMembers().size();j++)
-            				tc.sendMessage(botJDA.getVoiceChannels().get(i).getMembers().get(j).getAsMention()).queue();
             		}
-            	}
+            		break;
+            		
+            	case "보이스채널유저목록":
+            		for(int i=0;i<botJDA.getVoiceChannels().size();i++) {
+	            		if(botJDA.getVoiceChannels().get(i).getId().equals(command[1])){
+	            			for(int j=0;j<botJDA.getVoiceChannels().get(i).getMembers().size();j++)
+	            				tc.sendMessage(botJDA.getVoiceChannels().get(i).getMembers().get(j).getAsMention()).queue();
+	            		}
+            		}
+            		break;
+            		
             }
+           
         }
     }
 }

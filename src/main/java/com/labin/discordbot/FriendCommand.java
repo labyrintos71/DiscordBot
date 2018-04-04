@@ -19,7 +19,10 @@ public class FriendCommand extends ListenerAdapter {
             //args 는 명령어
             //args 1 2 3 은 인수가 있을경우
             if(args[0].equals("ㅎㅇ")) tc.sendMessage("ㅎㅇ").queue();
-            
+            switch(args[0]) {
+            case "최태열":
+            	break;
+            }
             if(args[0].indexOf("님태열")!=-1) tc.sendMessage("좆같은소리하지마;").queue();
             if(args[0].indexOf("동훈")!=-1) tc.sendMessage("씨발련아").queue();
             if(args[0].indexOf("퇴까")!=-1) tc.sendMessage("씨 발!").queue();

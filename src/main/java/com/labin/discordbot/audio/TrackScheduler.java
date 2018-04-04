@@ -1,4 +1,4 @@
-package com.labin.discordbot;
+package com.labin.discordbot.audio;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;

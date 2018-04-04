@@ -14,10 +14,10 @@ public class MillitaryCalculator {
 	private HashMap<String, milliData> milliMapper = new HashMap();
 	private HashMap<String, String> nicknameMapper = new HashMap();
 	private String name = "N/A";
-	private final int SOLDIER = 640;
-	private final int AIRFORCE = 730;
-	private final int PUBLICSOLDIER = 730;
-	private final int TECHNICALSOLDIER =1037;
+	private final int SOLDIER = 21;
+	private final int AIRFORCE = 24;
+	private final int PUBLICSOLDIER = 24;
+	private final int TECHNICALSOLDIER =34;
 	
 	public MillitaryCalculator () {
 		
@@ -152,8 +152,8 @@ class milliData {
 		st = new StringTokenizer(startday,".");
 		startDate.set(Integer.parseInt(st.nextToken()), Integer.parseInt(st.nextToken()), Integer.parseInt(st.nextToken()));
 		st = new StringTokenizer(startday,".");
-		endDate.set(Integer.parseInt(st.nextToken()), Integer.parseInt(st.nextToken()), Integer.parseInt(st.nextToken()));
-		endDate.add(Calendar.DAY_OF_YEAR, service);
+		endDate.set(Integer.parseInt(st.nextToken()), Integer.parseInt(st.nextToken()), Integer.parseInt(st.nextToken())-1);
+		endDate.add(Calendar.MONTH, service);
 		
 		AllDay = calcDateforDay(startDate, endDate);
 	}
@@ -179,7 +179,7 @@ class milliData {
 	}
 	
 	public double getEndPercent(Calendar today) {
-		return (double)getEndDays(today)/ (double)AllDay* (double)100;
+		return (double)(getEndDays(today)+1)/ (double)AllDay* (double)100;
 	}
 	
 	public int calcDateforDay(Calendar start,Calendar end) {
