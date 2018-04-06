@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.labin.discordbot.audio.GuildMusicManager;
+import com.labin.discordbot.parser.YouTubeParser;
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
@@ -69,6 +70,11 @@ public class MusicCommand extends ListenerAdapter {
         }
         if (msg.getContentRaw().startsWith("!stop"))
         	audioManager.closeAudioConnection();
+        if (msg.getContentRaw().startsWith("!test")) {
+        	
+        	YouTubeParser ytp=new YouTubeParser("heymama");
+        	ytp.start();
+        }
         
 	}
 
@@ -122,7 +128,7 @@ public class MusicCommand extends ListenerAdapter {
 		    
 		  //!play
 		  private void play(Guild guild, GuildMusicManager musicManager, AudioTrack track) {
-			  
+			//뮤직봇이 들어와줘야 할 자리
 		    musicManager.scheduler.queue(track);
 		  }
 		  

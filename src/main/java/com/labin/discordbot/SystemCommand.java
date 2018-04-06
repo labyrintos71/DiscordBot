@@ -1,9 +1,11 @@
 package com.labin.discordbot;
 
+import java.util.List;
 import java.util.Random;
 
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.entities.Message;
+import net.dv8tion.jda.core.entities.MessageHistory;
 import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
@@ -23,8 +25,7 @@ public class SystemCommand extends ListenerAdapter {
         if(user.isBot()) return;
         if(msg.getContentRaw().charAt(0) == '!'){
             String[] command = msg.getContentRaw().substring(1).split(" ");
-            
-            switch(msg.getContentRaw().substring(1)) {
+            switch(command[0]) {
             
             	case "들어가":
             	case "퇴근":
@@ -41,11 +42,13 @@ public class SystemCommand extends ListenerAdapter {
     	                tc.sendMessage("퇴 까").queue();
                 	}
                 	break;
+                	
             	case "꺼져":
             		tc.sendMessage("넹...").queue();
 	                botJDA.shutdown();
 	                botJDA=null;
 	                break;
+	                
             	case "리스너 제거":
             		tc.sendMessage("제거중,,,").queue();
                 	for(int i=0;i<botJDA.getRegisteredListeners().size();i++) {
@@ -54,6 +57,14 @@ public class SystemCommand extends ListenerAdapter {
                 			i=-1;
                 		}
                 	}
+            		break;
+            	
+            	case "청소":
+            		tc.sendMessage("현재 지원하고있지 않습니다.").queue();
+            		 /*MessageHistory mh = new MessageHistory(tc);
+                     List<Message> msgs = mh.retrievePast(Integer.parseInt(command[1])).complete();
+                     tc.deleteMessages(msgs).complete();
+                     tc.sendMessage(mh.getRetrievedHistory().size()+"중 "+command[1] + " 개의 메시지를 제거했습니다.").queue();*/
             		break;
             		
             	case "리스너 목록":
@@ -84,10 +95,8 @@ public class SystemCommand extends ListenerAdapter {
 	            				tc.sendMessage(botJDA.getVoiceChannels().get(i).getMembers().get(j).getAsMention()).queue();
 	            		}
             		}
-            		break;
-            		
+            		break;	
             }
-           
         }
     }
 }

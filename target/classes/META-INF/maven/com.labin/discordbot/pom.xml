@@ -20,20 +20,42 @@
         <name>jcenter-bintray</name>
         <url>http://jcenter.bintray.com</url>
     </repository>
+    
+    <repository>
+      <id>google-api-services</id>
+      <url>http://google-api-client-libraries.appspot.com/mavenrepo</url>
+    </repository>
    
 </repositories>
 
 <dependencies>
+<!-- JDA -->
     <dependency>
         <groupId>net.dv8tion</groupId>
         <artifactId>JDA</artifactId>
         <version>LATEST</version>
     </dependency>
     
+<!-- Discord Audio Player -->
     <dependency>
     <groupId>com.sedmelluq</groupId>
     <artifactId>lavaplayer</artifactId>
     <version>1.2.62</version>
   </dependency>
+  
+<!-- YouTube API -->
+  <dependency>
+      <groupId>com.google.apis</groupId>
+      <artifactId>google-api-services-youtube</artifactId>
+      <version>v3-rev193-1.23.0</version>
+    </dependency>
+    
+<!-- OkHttp -->
+  <dependency>
+  	<groupId>com.squareup.okhttp3</groupId>
+  	<artifactId>okhttp</artifactId>
+  	<version>3.10.0</version>
+  </dependency>
+   
 </dependencies>
 </project>
