@@ -1,8 +1,6 @@
 package com.labin.discordbot;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -38,7 +36,7 @@ public class MusicCommand extends ListenerAdapter {
 	private AudioManager audioManager;
 	private Guild guild;
 	private User user;
-	private AudioPlayerManager playerManager = new DefaultAudioPlayerManager();
+	private AudioPlayerManager playerManager;
 	private Map<Long, GuildMusicManager> musicManagers = new HashMap<>();
 	private Message msg;
 	private YouTubeParser parser=new YouTubeParser();
@@ -55,6 +53,7 @@ public class MusicCommand extends ListenerAdapter {
         user = event.getAuthor();
         msg = event.getMessage();
         textChannel = event.getTextChannel();
+        playerManager = new DefaultAudioPlayerManager(); 
         AudioSourceManagers.registerRemoteSources(playerManager);
         AudioSourceManagers.registerLocalSource(playerManager);
         
@@ -78,11 +77,13 @@ public class MusicCommand extends ListenerAdapter {
                     break;
         			
         	}
-        			data=parser.getVideo(command, 1);
-        			if(data.size()==0) return;
-                	audioManager.openAudioConnection(voiceChannel);
-                	textChannel.sendMessage("검색된 내용 :  " + data.get(0).getTitle()).queue();
-                    loadAndPlay("https://www.youtube.com/watch?v="+data.get(0).getID());
+			data=parser.getVideo(command, 1);
+			if(data.size()==0) {
+        	textChannel.sendMessage("검색된 데이터가 없습니다!").queue();
+				return;
+			}
+        	audioManager.openAudioConnection(voiceChannel);
+            loadAndPlay("https://www.youtube.com/watch?v="+data.get(0).getID());
         }
         if (msg.getContentRaw().startsWith("!stop"))
         	stopTrack();
@@ -114,7 +115,7 @@ public class MusicCommand extends ListenerAdapter {
 
 		        musicManager.scheduler.queue(track);
 		        if(musicManager.scheduler.getQueue().size()>0)
-		    	textChannel.sendMessage("Adding to queue["+musicManager.scheduler.getQueue().size()+"] : " + track.getInfo().title+" : "+getTimeforMilli(track.getInfo().length)).queue();
+		    	textChannel.sendMessage("Adding to queue["+musicManager.scheduler.getQueue().size()+"] : " + track.getInfo().title+" : "+"`"+getTimeforMilli(track.getInfo().length)).queue();
 			 
 		      }
 

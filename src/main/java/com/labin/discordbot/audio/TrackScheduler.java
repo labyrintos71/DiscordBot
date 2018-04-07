@@ -15,17 +15,18 @@ import net.dv8tion.jda.core.managers.AudioManager;
 public class TrackScheduler extends AudioEventAdapter {
 
 	  private final AudioPlayer player;
-	  private final AudioManager audioManager;
 	  private final TextChannel textChannel;
 	  private final Queue<AudioTrack> queue= new LinkedList<>();
+	  private final audioCloser closer;
 
 	  /**
 	   * @param player The audio player this scheduler uses
 	   */
 	  public TrackScheduler(AudioPlayer player,AudioManager audiomanager,TextChannel textchannel) {
 	    this.player = player;
-	    audioManager=audiomanager;
+	    closer=new audioCloser(audiomanager);
 	    textChannel=textchannel;
+	    
 	  }
 
 	  /**
@@ -54,8 +55,9 @@ public class TrackScheduler extends AudioEventAdapter {
 	  @Override
 	  public void onTrackEnd(AudioPlayer player, AudioTrack track, AudioTrackEndReason endReason) {
 	    // Only start the next track if the end reason is suitable for it (FINISHED or LOAD_FAILED)
-	    if (endReason==AudioTrackEndReason.STOPPED) audioManager.closeAudioConnection();
-	    if (endReason==AudioTrackEndReason.FINISHED&&queue.size()==0)audioManager.closeAudioConnection();
+	    if (endReason==AudioTrackEndReason.STOPPED||endReason==AudioTrackEndReason.FINISHED&&queue.size()==0) {
+	    	closer.start();
+	    }
 	    if (endReason.mayStartNext) {
 	      nextTrack();
 	    }
@@ -65,9 +67,17 @@ public class TrackScheduler extends AudioEventAdapter {
 	public void onTrackStart(AudioPlayer player, AudioTrack track) {
 		// TODO Auto-generated method stub
 		super.onTrackStart(player, track);
-		textChannel.sendMessage("Now Playing : "+track.getInfo().title).queue();
+		textChannel.sendMessage("Now Playing : "+track.getInfo().title+"`"+getTimeforMilli(track.getInfo().length)+"`").queue();
 	}
-
+	private String getTimeforMilli(long ms) {		 
+		return shiftZero(ms / 1000 / 3600) + ":" + shiftZero(ms / 1000 % 3600 / 60) + ":" + shiftZero(ms / 1000 % 3600 % 60);
+	}
+	  
+	private String shiftZero(long time) {
+		if(time<10) return "0"+time;
+		else return ""+time;
+	}
+	
 	public Queue getQueue() {
 		  return queue;
 	  }
