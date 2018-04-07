@@ -34,6 +34,7 @@ public class MillitaryCommand extends ListenerAdapter {
         		// Create the EmbedBuilder instance
         		EmbedBuilder eb = new EmbedBuilder();
         		eb.setTitle(args[1]+"("+mc.getRealName()+") 님", null);
+        		//에러처리하는거 만들기
         		eb.setDescription(mc.getStartDate()+"~"+mc.getEndDate());
         		eb.setColor(Color.red);
         		//eb.setColor(new Color(0xF40C0C));

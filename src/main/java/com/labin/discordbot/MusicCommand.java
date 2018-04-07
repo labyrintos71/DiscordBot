@@ -1,9 +1,14 @@
 package com.labin.discordbot;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.StringTokenizer;
 
 import com.labin.discordbot.audio.GuildMusicManager;
+import com.labin.discordbot.data.YouTubeVideoData;
 import com.labin.discordbot.parser.YouTubeParser;
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
@@ -25,16 +30,20 @@ import net.dv8tion.jda.core.hooks.ListenerAdapter;
 import net.dv8tion.jda.core.managers.AudioManager;
 
 public class MusicCommand extends ListenerAdapter {
-	private String name;
+	private StringTokenizer token;
+	private String command;
 	private VoiceChannel voiceChannel;
 	private TextChannel textChannel;
 	private JDA botJDA;
 	private AudioManager audioManager;
 	private Guild guild;
 	private User user;
-	private AudioPlayerManager playerManager;
-	private Map<Long, GuildMusicManager> musicManagers;
+	private AudioPlayerManager playerManager = new DefaultAudioPlayerManager();
+	private Map<Long, GuildMusicManager> musicManagers = new HashMap<>();
+	private Message msg;
+	private YouTubeParser parser=new YouTubeParser();
 	private GuildMusicManager musicManager;
+	private ArrayList<YouTubeVideoData> data;
 	public MusicCommand(JDA jda) {
 		botJDA=jda;
 		guild=botJDA.getGuilds().get(0);
@@ -44,45 +53,50 @@ public class MusicCommand extends ListenerAdapter {
 	@Override
     public void onMessageReceived(MessageReceivedEvent event) {
         user = event.getAuthor();
+        msg = event.getMessage();
         textChannel = event.getTextChannel();
-        Message msg = event.getMessage();
-        this.musicManagers = new HashMap<>();
-        this.playerManager = new DefaultAudioPlayerManager();
         AudioSourceManagers.registerRemoteSources(playerManager);
         AudioSourceManagers.registerLocalSource(playerManager);
         
         if (user.isBot()) return;
         if (msg.getContentRaw().startsWith("!play")) {
-        	if(msg.getContentRaw().indexOf(" ")==-1) {
-        		textChannel.sendMessage("제목을 입력해주세요 " + user.getAsMention()).queue();
-        		return;
-        	}
         	voiceChannel=findVoiceChannel(user.getAsMention());
-        	if(voiceChannel!=null) {
-        		audioManager.openAudioConnection(voiceChannel);
-        	}
-        	else {
+        	if(voiceChannel==null) {
         		textChannel.sendMessage("음성챗에 먼저 들어가세여 ㅡㅡ" + user.getAsMention()).queue();
         		return;
         	}
-            loadAndPlay("https://www.youtube.com/watch?v=kfE0y1IV8Bc");
-        	
+        	if(msg.getContentRaw().indexOf(" ")==-1) {
+        		textChannel.sendMessage("노래 제목을 입력해주세요").queue();
+        		return;
+        	}
+            String command = msg.getContentRaw().substring(msg.getContentRaw().indexOf(" "));
+        	switch(command.length()) {
+        		case 0:
+            		textChannel.sendMessage("제목을 입력해주세요 " + user.getAsMention()).queue();
+            		return;
+        		case 1:
+                    break;
+        			
+        	}
+        			data=parser.getVideo(command, 1);
+        			if(data.size()==0) return;
+                	audioManager.openAudioConnection(voiceChannel);
+                	textChannel.sendMessage("검색된 내용 :  " + data.get(0).getTitle()).queue();
+                    loadAndPlay("https://www.youtube.com/watch?v="+data.get(0).getID());
         }
         if (msg.getContentRaw().startsWith("!stop"))
-        	audioManager.closeAudioConnection();
-        if (msg.getContentRaw().startsWith("!test")) {
-        	
-        	YouTubeParser ytp=new YouTubeParser("heymama");
-        	ytp.start();
-        }
+        	stopTrack();
+        if (msg.getContentRaw().startsWith("!skip"))
+        	skipTrack();
+        if (msg.getContentRaw().startsWith("!pause"))
+        	pauseTrack();
         
 	}
 
 	  	private synchronized GuildMusicManager getGuildAudioPlayer(Guild guild) {
 		    long guildId = Long.parseLong(guild.getId());
 		    if(musicManagers.size()==0) {
-		      musicManager = new GuildMusicManager(playerManager);
-		      musicManagers.put(guildId, musicManager);
+		      musicManagers.put(guildId,  new GuildMusicManager(playerManager, audioManager,textChannel));
 		    }
 		    musicManager = musicManagers.get(guildId);
 		    guild.getAudioManager().setSendingHandler(musicManager.getSendHandler());
@@ -90,16 +104,18 @@ public class MusicCommand extends ListenerAdapter {
 		  }
 
 		  private void loadAndPlay(String trackUrl) {
-		    musicManager = getGuildAudioPlayer(textChannel.getGuild());
-		    playerManager.loadItemOrdered(musicManager, trackUrl, resultHandler);
+			  musicManager = getGuildAudioPlayer(textChannel.getGuild());
+		      playerManager.loadItemOrdered(musicManager, trackUrl, resultHandler);
 		  }
 		  
 		  private AudioLoadResultHandler resultHandler =new AudioLoadResultHandler() {
 		      @Override
 		      public void trackLoaded(AudioTrack track) {
-		    	  textChannel.sendMessage("Adding to queue " + track.getInfo().title).queue();
 
-		        play(voiceChannel.getGuild(), musicManager, track);
+		        musicManager.scheduler.queue(track);
+		        if(musicManager.scheduler.getQueue().size()>0)
+		    	textChannel.sendMessage("Adding to queue["+musicManager.scheduler.getQueue().size()+"] : " + track.getInfo().title+" : "+getTimeforMilli(track.getInfo().length)).queue();
+			 
 		      }
 
 		      @Override
@@ -111,13 +127,12 @@ public class MusicCommand extends ListenerAdapter {
 		        }
 
 		        textChannel.sendMessage("Adding to queue " + firstTrack.getInfo().title + " (first track of playlist " + playlist.getName() + ")").queue();
-
-		        play(voiceChannel.getGuild(), musicManager, firstTrack);
+		       // musicManager.scheduler.queue(track);
 		      }
 
 		      @Override
 		      public void noMatches() {
-		    	//  textChannel.sendMessage("Nothing found by " + trackUrl).queue();
+		    	  textChannel.sendMessage("Nothing found by " ).queue();
 		      }
 
 		      @Override
@@ -125,20 +140,27 @@ public class MusicCommand extends ListenerAdapter {
 		    	  textChannel.sendMessage("Could not play: " + exception.getMessage()).queue();
 		      }
 		    };
-		    
-		  //!play
-		  private void play(Guild guild, GuildMusicManager musicManager, AudioTrack track) {
-			//뮤직봇이 들어와줘야 할 자리
-		    musicManager.scheduler.queue(track);
-		  }
 		  
 		  // !skip
-		  private void skipTrack(TextChannel channel) {
-		    GuildMusicManager musicManager = getGuildAudioPlayer(channel.getGuild());
+		  private void skipTrack() {
+			GuildMusicManager musicManager = getGuildAudioPlayer(textChannel.getGuild());
 		    musicManager.scheduler.nextTrack();
-
-		    channel.sendMessage("Skipped to next track.").queue();
+		    textChannel.sendMessage("Skipped to next track.").queue();
 		  }
+		  
+		  //stop
+		  private void stopTrack() {
+			  GuildMusicManager musicManager = getGuildAudioPlayer(textChannel.getGuild());
+			  musicManager.player.stopTrack();
+			  musicManager.scheduler.initQueue();
+		  }
+		  
+		  //pause
+		  private void pauseTrack() {
+			  GuildMusicManager musicManager = getGuildAudioPlayer(textChannel.getGuild());
+			  musicManager.player.setPaused(!musicManager.player.isPaused());
+		  }
+		  
 		  //////////시스템 메소드
 		  private VoiceChannel findVoiceChannel(String emote) {
 	         	for(int i=0;i<botJDA.getVoiceChannels().size();i++) {
@@ -150,4 +172,13 @@ public class MusicCommand extends ListenerAdapter {
 	         return null;
 		  }
 		  
+		  private String getTimeforMilli(long ms) {
+			 
+			  return shiftZero(ms / 1000 / 3600) + ":" + shiftZero(ms / 1000 % 3600 / 60) + ":" + shiftZero(ms / 1000 % 3600 % 60);
+		  }
+		  
+		  private String shiftZero(long time) {
+			  if(time<10) return "0"+time;
+			  else return ""+time;
+		  }
 }
