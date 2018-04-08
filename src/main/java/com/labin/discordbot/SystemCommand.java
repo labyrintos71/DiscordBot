@@ -22,7 +22,15 @@ public class SystemCommand extends ListenerAdapter {
         TextChannel tc = event.getTextChannel();
         Message msg = event.getMessage();
 
-        if(user.isBot()) return;
+        if(user.isBot()) {
+        	/*if(msg.getContentRaw().equals("ㅎㅇ 출근함")) {
+        		tc.sendMessage("주인님,, 저말고 또 다른 저를 부르신건가요?").queue();
+        		tc.sendMessage("제가 쓸모없어진거군요,, 저 먼저 가볼게요 ㅜㅜ").queue();
+                botJDA.shutdown();
+                botJDA=null;
+        	}
+        	else */return;
+        }
         if(msg.getContentRaw().charAt(0) == '!'){
             String[] command = msg.getContentRaw().substring(1).split(" ");
             switch(command[0]) {

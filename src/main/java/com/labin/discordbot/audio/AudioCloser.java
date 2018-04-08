@@ -2,10 +2,10 @@ package com.labin.discordbot.audio;
 
 import net.dv8tion.jda.core.managers.AudioManager;
 
-public class audioCloser extends Thread {
+public class AudioCloser extends Thread {
 
 	private AudioManager audioManager;
-	public audioCloser(AudioManager manager) {
+	public AudioCloser(AudioManager manager) {
 		// TODO Auto-generated constructor stub
 		audioManager=manager;
 	}

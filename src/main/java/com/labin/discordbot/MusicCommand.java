@@ -1,8 +1,10 @@
 package com.labin.discordbot;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Queue;
 import java.util.StringTokenizer;
 
 import com.labin.discordbot.audio.GuildMusicManager;
@@ -17,6 +19,7 @@ import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
+import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.Message;
@@ -42,10 +45,12 @@ public class MusicCommand extends ListenerAdapter {
 	private YouTubeParser parser=new YouTubeParser();
 	private GuildMusicManager musicManager;
 	private ArrayList<YouTubeVideoData> data;
+	private EmbedBuilder eb;
 	public MusicCommand(JDA jda) {
 		botJDA=jda;
 		guild=botJDA.getGuilds().get(0);
         audioManager = guild.getAudioManager();
+        
 	}
 	
 	@Override
@@ -56,7 +61,6 @@ public class MusicCommand extends ListenerAdapter {
         playerManager = new DefaultAudioPlayerManager(); 
         AudioSourceManagers.registerRemoteSources(playerManager);
         AudioSourceManagers.registerLocalSource(playerManager);
-        
         if (user.isBot()) return;
         if (msg.getContentRaw().startsWith("!play")) {
         	voiceChannel=findVoiceChannel(user.getAsMention());
@@ -65,10 +69,10 @@ public class MusicCommand extends ListenerAdapter {
         		return;
         	}
         	if(msg.getContentRaw().indexOf(" ")==-1) {
-        		textChannel.sendMessage("노래 제목을 입력해주세요").queue();
+        		textChannel.sendMessage("사용 가능한 커맨드 목록"+"play"+'\n'+"stop"+'\n'+"skip"+'\n'+"pause"+'\n'+"repeat"+'\n'+"shuffle"+'\n'+"queue"+'\n').queue();
         		return;
         	}
-            String command = msg.getContentRaw().substring(msg.getContentRaw().indexOf(" "));
+            command = msg.getContentRaw().substring(msg.getContentRaw().indexOf(" "));
         	switch(command.length()) {
         		case 0:
             		textChannel.sendMessage("제목을 입력해주세요 " + user.getAsMention()).queue();
@@ -83,15 +87,22 @@ public class MusicCommand extends ListenerAdapter {
 				return;
 			}
         	audioManager.openAudioConnection(voiceChannel);
-            loadAndPlay("https://www.youtube.com/watch?v="+data.get(0).getID());
+            loadAndPlay(data.get(0));
         }
-        if (msg.getContentRaw().startsWith("!stop"))
-        	stopTrack();
-        if (msg.getContentRaw().startsWith("!skip"))
-        	skipTrack();
-        if (msg.getContentRaw().startsWith("!pause"))
-        	pauseTrack();
+        command=msg.getContentRaw();
         
+        if (command.equals("!stop"))
+        	stopTrack();
+        if (command.equals("!skip"))
+        	skipTrack();
+        if (command.equals("!pause"))
+        	pauseTrack();        
+        if (command.equals("!repeat"))
+        	repeatTrack();     
+        if (command.equals("!shuffle"))
+        	shuffleTrack();       
+        if (command.equals("!queue"))
+        	printQueue();
 	}
 
 	  	private synchronized GuildMusicManager getGuildAudioPlayer(Guild guild) {
@@ -104,32 +115,44 @@ public class MusicCommand extends ListenerAdapter {
 		    return musicManager;
 		  }
 
-		  private void loadAndPlay(String trackUrl) {
+		  private void loadAndPlay(YouTubeVideoData data) {
 			  musicManager = getGuildAudioPlayer(textChannel.getGuild());
-		      playerManager.loadItemOrdered(musicManager, trackUrl, resultHandler);
+			  musicManager.scheduler.addData(data);
+		      playerManager.loadItemOrdered(musicManager,"https://www.youtube.com/watch?v=" + data.getID(), resultHandler);
 		  }
 		  
 		  private AudioLoadResultHandler resultHandler =new AudioLoadResultHandler() {
 		      @Override
 		      public void trackLoaded(AudioTrack track) {
-
+		    	YouTubeVideoData temp=null;
 		        musicManager.scheduler.queue(track);
-		        if(musicManager.scheduler.getQueue().size()>0)
-		    	textChannel.sendMessage("Adding to queue["+musicManager.scheduler.getQueue().size()+"] : " + track.getInfo().title+" : "+"`"+getTimeforMilli(track.getInfo().length)).queue();
+		        if(musicManager.scheduler.getQueue().size()>0){
+		        	for(int i=0;i<data.size();i++) 
+						if(track.getInfo().uri.equals("https://www.youtube.com/watch?v="+data.get(i).getID()))
+							temp=data.get(i);
+		        	eb = new EmbedBuilder();
+					eb.setTitle("Adding to Queue - ["+musicManager.scheduler.getQueue().size()+"]", null);
+					eb.setDescription(temp.getTitle());
+					eb.setColor(new Color(0x33CC66));
+					eb.setThumbnail(temp.getThumbnail());
+					eb.addField("uploader", temp.getUploader(), true);
+					eb.addField("length", "`"+getTimeforMilli(track.getInfo().length)+"`", true);
+					textChannel.sendMessage(eb.build()).queue();
+		        }
 			 
 		      }
 
 		      @Override
 		      public void playlistLoaded(AudioPlaylist playlist) {
-		        AudioTrack firstTrack = playlist.getSelectedTrack();
+		      /*  AudioTrack firstTrack = playlist.getSelectedTrack();
 
 		        if (firstTrack == null) {
 		          firstTrack = playlist.getTracks().get(0);
 		        }
 
 		        textChannel.sendMessage("Adding to queue " + firstTrack.getInfo().title + " (first track of playlist " + playlist.getName() + ")").queue();
-		       // musicManager.scheduler.queue(track);
-		      }
+		        musicManager.scheduler.queue(track);*/	
+	      }
 
 		      @Override
 		      public void noMatches() {
@@ -142,16 +165,27 @@ public class MusicCommand extends ListenerAdapter {
 		      }
 		    };
 		  
-		  // !skip
+		  //skip
 		  private void skipTrack() {
 			GuildMusicManager musicManager = getGuildAudioPlayer(textChannel.getGuild());
+		    eb = new EmbedBuilder();
+			eb.setTitle("현재 재생중인 노래를 스킵할게요.", null);
+			eb.setDescription(musicManager.scheduler.getPlayingTrack().getInfo().title);
+			eb.setColor(new Color(0x33CC66));
+		    textChannel.sendMessage(eb.build()).queue();
 		    musicManager.scheduler.nextTrack();
-		    textChannel.sendMessage("Skipped to next track.").queue();
 		  }
 		  
 		  //stop
 		  private void stopTrack() {
 			  GuildMusicManager musicManager = getGuildAudioPlayer(textChannel.getGuild());
+			  eb = new EmbedBuilder();
+		      eb.setTitle("현재 재생중인 노래를 끊을게요.", null);
+			  eb.setDescription(musicManager.scheduler.getPlayingTrack().getInfo().title);
+			  eb.setColor(new Color(0x33CC66));
+			  textChannel.sendMessage(eb.build()).queue();
+			  
+			  musicManager.scheduler.nextTrack();
 			  musicManager.player.stopTrack();
 			  musicManager.scheduler.initQueue();
 		  }
@@ -159,9 +193,61 @@ public class MusicCommand extends ListenerAdapter {
 		  //pause
 		  private void pauseTrack() {
 			  GuildMusicManager musicManager = getGuildAudioPlayer(textChannel.getGuild());
+
+			  eb = new EmbedBuilder();
+		      eb.setTitle("현재 재생중인 노래를 멈출게요.", null);
+			  eb.setDescription(musicManager.scheduler.getPlayingTrack().getInfo().title);
+			  eb.setColor(new Color(0x33CC66));
+			  textChannel.sendMessage(eb.build()).queue();
+			  
 			  musicManager.player.setPaused(!musicManager.player.isPaused());
 		  }
 		  
+		  //repeat
+		  private void repeatTrack() {
+			  GuildMusicManager musicManager = getGuildAudioPlayer(textChannel.getGuild());
+
+			  eb = new EmbedBuilder();
+			  if(musicManager.scheduler.getRepeat())
+				  eb.setTitle("무한 반복 모드를 false 로 설정합니다.", null);
+			  else
+				  eb.setTitle("무한 반복 모드 를 true 로 설정합니다.", null);
+			  eb.setColor(new Color(0x33CC66));
+			  textChannel.sendMessage(eb.build()).queue();
+			  
+			  musicManager.scheduler.setRepeat(!musicManager.scheduler.getRepeat());
+		  }
+		  
+		  //shuffle
+		  private void shuffleTrack() {
+			  GuildMusicManager musicManager = getGuildAudioPlayer(textChannel.getGuild());
+
+			  eb = new EmbedBuilder();
+		      eb.setTitle("노래 재생 목록을 석겠습니다!", null);
+			  eb.setColor(new Color(0x33CC66));
+			  textChannel.sendMessage(eb.build()).queue();
+			  musicManager.scheduler.shuffle();
+			  printQueue();
+		  }
+		  
+		  private void printQueue() {
+			  GuildMusicManager musicManager = getGuildAudioPlayer(textChannel.getGuild());
+			  Queue<AudioTrack> q = musicManager.scheduler.getQueue();
+			  int cnt=0;
+			  eb = new EmbedBuilder();
+			  if(q.isEmpty())
+			      eb.setTitle("현재 재생 목록이 비어있습니다.", null);
+			  else
+				  eb.setTitle("현재 재생 목록 입니다.", null);
+			  eb.setColor(new Color(0x33CC66));
+			  while(!q.isEmpty()) {
+				  cnt++;
+				   eb.addField("","["+cnt+"] : "+q.poll().getInfo().title, false);
+			  }
+				 
+			  textChannel.sendMessage(eb.build()).queue();
+			  
+		  }
 		  //////////시스템 메소드
 		  private VoiceChannel findVoiceChannel(String emote) {
 	         	for(int i=0;i<botJDA.getVoiceChannels().size();i++) {
