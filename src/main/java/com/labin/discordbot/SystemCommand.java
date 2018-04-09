@@ -13,6 +13,7 @@ import net.dv8tion.jda.core.hooks.ListenerAdapter;
 
 public class SystemCommand extends ListenerAdapter {
 	private JDA botJDA;
+	private int sw=0;
 	public SystemCommand(JDA system) {
 		botJDA=system;
 	}
@@ -23,13 +24,16 @@ public class SystemCommand extends ListenerAdapter {
         Message msg = event.getMessage();
 
         if(user.isBot()) {
-        	/*if(msg.getContentRaw().equals("ㅎㅇ 출근함")) {
+        	if(msg.getContentRaw().equals("ㅎㅇ 출근함")&&sw==1) {
         		tc.sendMessage("주인님,, 저말고 또 다른 저를 부르신건가요?").queue();
         		tc.sendMessage("제가 쓸모없어진거군요,, 저 먼저 가볼게요 ㅜㅜ").queue();
                 botJDA.shutdown();
                 botJDA=null;
         	}
-        	else */return;
+        	if(msg.getContentRaw().equals("ㅎㅇ 출근함")) {
+        		sw=1;
+        	}
+        	else return;
         }
         if(msg.getContentRaw().charAt(0) == '!'){
             String[] command = msg.getContentRaw().substring(1).split(" ");
@@ -40,9 +44,9 @@ public class SystemCommand extends ListenerAdapter {
             	case "퇴근해":
             		int temp=new Random().nextInt(3);
                 	if(temp==1) {
-    	                tc.sendMessage("앗싸 퇴근이당!").queue();
-    	                botJDA.shutdown();
-    	                botJDA=null;
+    	                tc.sendMessage("음,, 생각해 볼게").queue();
+    	                //botJDA.shutdown();
+    	               // botJDA=null;
                 	}else if(temp==2){
     	                tc.sendMessage("싫어").queue();
                 			
@@ -52,10 +56,14 @@ public class SystemCommand extends ListenerAdapter {
                 	break;
                 	
             	case "꺼져":
-            		tc.sendMessage("넹...").queue();
-	                botJDA.shutdown();
-	                botJDA=null;
-	                break;
+            		if(user.getId().equals("333577858729639937")) {
+                		tc.sendMessage("넹...").queue();
+    	                botJDA.shutdown();
+    	                botJDA=null;
+            		}else {
+            			tc.sendMessage("니가 뭔데 나한테 이래라 저래라야?").queue();
+            		}
+            		break;
 	                
             	case "리스너 제거":
             		tc.sendMessage("제거중,,,").queue();

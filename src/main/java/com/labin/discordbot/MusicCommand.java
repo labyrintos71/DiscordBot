@@ -3,6 +3,7 @@ package com.labin.discordbot;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.StringTokenizer;
@@ -48,8 +49,6 @@ public class MusicCommand extends ListenerAdapter {
 	private EmbedBuilder eb;
 	public MusicCommand(JDA jda) {
 		botJDA=jda;
-		guild=botJDA.getGuilds().get(0);
-        audioManager = guild.getAudioManager();
         
 	}
 	
@@ -61,9 +60,11 @@ public class MusicCommand extends ListenerAdapter {
         playerManager = new DefaultAudioPlayerManager(); 
         AudioSourceManagers.registerRemoteSources(playerManager);
         AudioSourceManagers.registerLocalSource(playerManager);
+		guild=textChannel.getGuild();
+        audioManager = guild.getAudioManager();
         if (user.isBot()) return;
         if (msg.getContentRaw().startsWith("!play")) {
-        	voiceChannel=findVoiceChannel(user.getAsMention());
+        	voiceChannel=findVoiceChannel(textChannel,user.getId());
         	if(voiceChannel==null) {
         		textChannel.sendMessage("음성챗에 먼저 들어가세여 ㅡㅡ" + user.getAsMention()).queue();
         		return;
@@ -117,7 +118,6 @@ public class MusicCommand extends ListenerAdapter {
         	 
         }
         
-        
         command=msg.getContentRaw();
         
         if (command.equals("!stop"))
@@ -136,7 +136,7 @@ public class MusicCommand extends ListenerAdapter {
 
 	  	private synchronized GuildMusicManager getGuildAudioPlayer(Guild guild) {
 		    long guildId = Long.parseLong(guild.getId());
-		    if(musicManagers.size()==0) {
+		    if(musicManagers.get(guildId)==null) {
 		      musicManagers.put(guildId,  new GuildMusicManager(playerManager, audioManager,textChannel));
 		    }
 		    musicManager = musicManagers.get(guildId);
@@ -258,10 +258,11 @@ public class MusicCommand extends ListenerAdapter {
 			  musicManager.scheduler.shuffle();
 			  printQueue();
 		  }
-		  
+		  //queue
 		  private void printQueue() {
 			  GuildMusicManager musicManager = getGuildAudioPlayer(textChannel.getGuild());
 			  Queue<AudioTrack> q = musicManager.scheduler.getQueue();
+			  String des="";
 			  int cnt=0;
 			  eb = new EmbedBuilder();
 			  if(q.isEmpty())
@@ -271,18 +272,20 @@ public class MusicCommand extends ListenerAdapter {
 			  eb.setColor(new Color(0x33CC66));
 			  while(!q.isEmpty()) {
 				  cnt++;
-				   eb.addField("","["+cnt+"] : "+q.poll().getInfo().title, false);
+				   //eb.addField("","["+cnt+"] : "+q.poll().getInfo().title, false);
+				  des+="["+cnt+"] : "+q.poll().getInfo().title+'\n';
 			  }
-				 
+			  eb.setDescription(des);
 			  textChannel.sendMessage(eb.build()).queue();
 			  
 		  }
 		  //////////시스템 메소드
-		  private VoiceChannel findVoiceChannel(String emote) {
-	         	for(int i=0;i<botJDA.getVoiceChannels().size();i++) {
-	         			for(int j=0;j<botJDA.getVoiceChannels().get(i).getMembers().size();j++) {
-	         				if(botJDA.getVoiceChannels().get(i).getMembers().get(j).getAsMention().equals(emote))
-	         					return botJDA.getVoiceChannels().get(i);
+		  private VoiceChannel findVoiceChannel(TextChannel channel, String id) {
+			  List<VoiceChannel> voiceChannels=channel.getGuild().getVoiceChannels();
+	         	for(int i=0;i<voiceChannels.size();i++) {
+	         			for(int j=0;j<voiceChannels.get(i).getMembers().size();j++) {
+	         				if(voiceChannels.get(i).getMembers().get(j).getUser().getId().equals(id))
+	         					return voiceChannels.get(i);
 	         			}
 	         	}
 	         return null;
