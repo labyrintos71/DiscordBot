@@ -45,9 +45,9 @@ public class YouTubeParser {
 		      //검색결과가 있다면
 		      if (searchResultList != null) {
 		    	  for(int i=0;i<searchResultList.size();i++) {	
-			  	     singleVideo = searchResultList.iterator().next();
+			  	     singleVideo = searchResultList.get(i);
 			  	     rId = singleVideo.getId();
-		
+			  	     System.out.println("parser : "+singleVideo.getSnippet().getTitle());
 			  	      // Double checks the kind is video.
 			  	      if (rId.getKind().equals("youtube#video")) {
 			  	    	  musicdata.add(new YouTubeVideoData(singleVideo.getSnippet().getTitle(),rId.getVideoId(),singleVideo.getSnippet().getThumbnails().getDefault().getUrl(),singleVideo.getSnippet().getChannelTitle()));

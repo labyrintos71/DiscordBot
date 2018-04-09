@@ -68,19 +68,13 @@ public class MusicCommand extends ListenerAdapter {
         		textChannel.sendMessage("음성챗에 먼저 들어가세여 ㅡㅡ" + user.getAsMention()).queue();
         		return;
         	}
+        	
         	if(msg.getContentRaw().indexOf(" ")==-1) {
-        		textChannel.sendMessage("사용 가능한 커맨드 목록"+"play"+'\n'+"stop"+'\n'+"skip"+'\n'+"pause"+'\n'+"repeat"+'\n'+"shuffle"+'\n'+"queue"+'\n').queue();
+        		textChannel.sendMessage("사용 가능한 커맨드 목록"+'\n'+"play"+'\n'+"find"+'\n'+"stop"+'\n'+"skip"+'\n'+"pause"+'\n'+"repeat"+'\n'+"shuffle"+'\n'+"queue"+'\n').queue();
         		return;
         	}
-            command = msg.getContentRaw().substring(msg.getContentRaw().indexOf(" "));
-        	switch(command.length()) {
-        		case 0:
-            		textChannel.sendMessage("제목을 입력해주세요 " + user.getAsMention()).queue();
-            		return;
-        		case 1:
-                    break;
-        			
-        	}
+        	
+            command = msg.getContentRaw().substring(msg.getContentRaw().indexOf(" ")+1);
 			data=parser.getVideo(command, 1);
 			if(data.size()==0) {
         	textChannel.sendMessage("검색된 데이터가 없습니다!").queue();
@@ -89,6 +83,41 @@ public class MusicCommand extends ListenerAdapter {
         	audioManager.openAudioConnection(voiceChannel);
             loadAndPlay(data.get(0));
         }
+        if(msg.getContentRaw().startsWith("!find")) {
+        	int count=0;
+        	if(msg.getContentRaw().indexOf(" ")==-1) { 
+        	  eb = new EmbedBuilder();
+		      eb.setTitle("명령어 형식 : !find 검색결과개수 노래제목", null);
+		      eb.setDescription("ex) !find 10 shape of you");
+			  eb.setColor(new Color(0x33CC66));
+			  textChannel.sendMessage(eb.build()).queue();
+        		return;
+        	}	
+        	 command = msg.getContentRaw().substring(msg.getContentRaw().indexOf(" ")+1);
+        	 try {
+        		 count=Integer.parseInt(command.substring(0,command.indexOf(" ")));
+        	 }catch(Exception ex) {
+	           	  eb = new EmbedBuilder();
+	   		      eb.setTitle("검색 개수를 입력해주세요", null);
+	   			  eb.setColor(new Color(0x33CC66));
+	   			  textChannel.sendMessage(eb.build()).queue();
+	   			  return;
+        	 }
+ 			 data=parser.getVideo(command.substring(command.indexOf(" ")+1), count);
+ 			 for(int i=0;i<data.size();i++) {
+ 				eb = new EmbedBuilder();
+				eb.setTitle("#"+(i+1), null);
+				eb.setDescription(data.get(i).getTitle());
+				eb.setColor(new Color(0x33CC66));
+				eb.setThumbnail(data.get(i).getThumbnail());
+				eb.addField("uploader", data.get(i).getUploader(), true);
+				textChannel.sendMessage(eb.build()).queue();
+ 			 }
+        	 
+        	 
+        }
+        
+        
         command=msg.getContentRaw();
         
         if (command.equals("!stop"))
@@ -136,7 +165,7 @@ public class MusicCommand extends ListenerAdapter {
 					eb.setColor(new Color(0x33CC66));
 					eb.setThumbnail(temp.getThumbnail());
 					eb.addField("uploader", temp.getUploader(), true);
-					eb.addField("length", "`"+getTimeforMilli(track.getInfo().length)+"`", true);
+					eb.addField("Duration", "`"+getTimeforMilli(track.getInfo().length)+"`", true);
 					textChannel.sendMessage(eb.build()).queue();
 		        }
 			 
