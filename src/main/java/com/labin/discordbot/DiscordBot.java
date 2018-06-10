@@ -24,7 +24,7 @@ public class DiscordBot {
             jda.addEventListener(new MusicCommand(jda));
             jda.addEventListener(new SystemCommand(jda));
             //jda.getPresence().setStatus(OnlineStatus.OFFLINE);
-            jda.getPresence().setPresence(OnlineStatus.DO_NOT_DISTURB,Game.playing("섹스"));
+            jda.getPresence().setPresence(OnlineStatus.DO_NOT_DISTURB,Game.playing("봇실행중"));
         } catch (LoginException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
